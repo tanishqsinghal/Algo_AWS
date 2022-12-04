@@ -5,13 +5,13 @@ import pandas as pd
 from fyers_api import fyersModel, accessToken
 from autologin import *
 
-session = accessToken.SessionModel(client_id='YUBD35U8OF-100', secret_key='TJFZARII4E',
+session = accessToken.SessionModel(client_id='ORDBWKXRS7-100', secret_key='5R3786TZ0W',
                                    redirect_uri='https://www.google.co.in', response_type='code',
                                    grant_type='authorization_code')
 
 config = {
-    "client_id": "YUBD35U8OF-100",
-    "secret_key": "TJFZARII4E",
+    "client_id": "ORDBWKXRS7-100",
+    "secret_key": "5R3786TZ0W",
     "access_token": "",
     "request_url": "https://sm.affility.store"
 }
