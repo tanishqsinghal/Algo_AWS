@@ -1,5 +1,19 @@
-import schedule, time, datetime, requests
+import schedule, time, datetime, requests, json, os
 from threading import Timer
+import pandas as pd
+
+from fyers_api import fyersModel, accessToken
+
+session = accessToken.SessionModel(client_id='YUBD35U8OF-100', secret_key='TJFZARII4E',
+                                   redirect_uri='http://h2r1m.pythonanywhere.com/user/', response_type='code',
+                                   grant_type='authorization_code')
+
+config = {
+    "client_id": "YUBD35U8OF-100",
+    "secret_key": "TJFZARII4E",
+    "access_token": "",
+    "request_url": "https://sm.affility.store"
+}
 
 def send_telegram_message(request):
     bot_token = '5969891290:AAE13zPtwdc2P3VqZy6o_7opvRHbAtH_vfE'
@@ -15,32 +29,26 @@ def send_telegram_message(request):
         print(e)
     return
 
+def execute_trade():
+    print("TRADES EXECUTED")
 
-# nextDay = datetime.datetime.now() + datetime.timedelta(days=1)
-# dateString = datetime.datetime.now().strftime('%d-%m-%Y') + " 11-25-00"
-# newDate = nextDay.strptime(dateString,'%d-%m-%Y %H-%M-%S')
+def schedule_trades(functionName, timeToExecute):
+    print("SCHEDULED")
+    currentTime = datetime.datetime.now()
+    executionTime = datetime.datetime.now().strftime('%d-%m-%Y') + " " + timeToExecute
+    executionTime = datetime.datetime.strptime(executionTime, '%d-%m-%Y %H-%M-%S')
+    delay = (executionTime - currentTime).total_seconds()
+    if delay >= 0:
+        Timer(delay, functionName).start()
 
-currentTime = datetime.datetime.now()
-executionTime = datetime.datetime.now().strftime('%d-%m-%Y') + " 12-50-00"
-executionTime = datetime.datetime.strptime(executionTime, '%d-%m-%Y %H-%M-%S')
-delay = (executionTime - currentTime).total_seconds()
-print(delay)
-Timer(10.0, send_telegram_message, [str(datetime.datetime.now())]).start()
-Timer(30.0, send_telegram_message, [str(datetime.datetime.now())]).start()
-Timer(delay, send_telegram_message, [str(datetime.datetime.now())]).start()
 
-# def job():
-#     print("I am doing this job!")
-#
-#
-# schedule.every().monday.at("14:00").do(job)
-# schedule.every().tuesday.at("14:00").do(job)
-# schedule.every().wednesday.at("14:00").do(job)
-# schedule.every().thursday.at("14:00").do(job)
-# schedule.every().friday.at("14:00").do(job)
-# schedule.every().sunday.at("11:18").do(job)
-#
-# while True:
-#     schedule.run_pending()
-#     print("RUNNING")
-#     time.sleep(1)
+schedule.every().monday.at("09:00").do(schedule_trades, execute_trade, '09-20-00')
+schedule.every().tuesday.at("09:00").do(schedule_trades, execute_trade, '09-20-00')
+schedule.every().wednesday.at("09:00").do(schedule_trades, execute_trade, '09-20-00')
+schedule.every().thursday.at("09:00").do(schedule_trades, execute_trade, '09-20-00')
+schedule.every().friday.at("09:00").do(schedule_trades, execute_trade, '09-20-00')
+# schedule.every().sunday.at("13:54").do(schedule_trades, execute_trade, '13-55-00')
+
+while True:
+    schedule.run_pending()
+    time.sleep(60)
