@@ -1,77 +1,73 @@
 import requests
+import configparser
 from urllib.parse import urlparse, parse_qs
 
 from fyers_api import fyersModel, accessToken
 
 
-
-client_id = 'ORDBWKXRS7-100'
-
+config = configparser.ConfigParser()
+config.read('config.ini')
+client_id = config['fyers']['app_id']
 app_id = client_id[:-4]
-
-secret_key = '5R3786TZ0W'
-
-username = 'XS05939'
-
-password = 'Sudhakar9828#'
-
-pan = 'BCNPD9835L'
-
-pin = int('9462')
-
-redirect_uri = "https://www.google.co.in"
+secret_key = config['fyers']['app_secret']
+redirect_uri = config['fyers']['redirect_url']
+username = config['fyers']['user_id']
+password = config['fyers']['password']
+pan = config['fyers']['pan']
+pin = int(config['fyers']['two_fa'])
 
 
-
-session = accessToken.SessionModel(client_id=client_id, secret_key=secret_key, redirect_uri=redirect_uri,
+def login():
+    session = accessToken.SessionModel(client_id=client_id, secret_key=secret_key, redirect_uri=redirect_uri,
 
                                    response_type='code', grant_type='authorization_code')
 
 
 
-s = requests.Session()
+    s = requests.Session()
 
 
 
-data1 = f'{{"fy_id":"{username}","password":"{password}","app_id":"2","imei":"","recaptcha_token":""}}'
+    data1 = f'{{"fy_id":"{username}","password":"{password}","app_id":"2","imei":"","recaptcha_token":""}}'
 
-r1 = s.post('https://api.fyers.in/vagator/v1/login', data=data1)
+    r1 = s.post('https://api.fyers.in/vagator/v1/login', data=data1)
 
-request_key = r1.json()["request_key"]
+    request_key = r1.json()["request_key"]
 
-data2 = f'{{"request_key":"{request_key}","identity_type":"pin","identifier":"{pin}","recaptcha_token":""}}'
+    data2 = f'{{"request_key":"{request_key}","identity_type":"pin","identifier":"{pin}","recaptcha_token":""}}'
 
-r2 = s.post('https://api.fyers.in/vagator/v1/verify_pin', data=data2)
+    r2 = s.post('https://api.fyers.in/vagator/v1/verify_pin', data=data2)
 
-headers = {
+    headers = {
 
     'authorization': f"Bearer {r2.json()['data']['access_token']}",
 
     'content-type': 'application/json; charset=UTF-8'
 
-}
+    }
 
 
 
-data3 = f'{{"fyers_id":"{username}","app_id":"{app_id}","redirect_uri":"{redirect_uri}","appType":"100","code_challenge":"","state":"abcdefg","scope":"","nonce":"","response_type":"code","create_cookie":true}}'
+    data3 = f'{{"fyers_id":"{username}","app_id":"{app_id}","redirect_uri":"{redirect_uri}","appType":"100","code_challenge":"","state":"abcdefg","scope":"","nonce":"","response_type":"code","create_cookie":true}}'
 
 
 
-r3 = s.post('https://api.fyers.in/api/v2/token', headers=headers, data=data3)
+    r3 = s.post('https://api.fyers.in/api/v2/token', headers=headers, data=data3)
 
-parsed = urlparse(r3.json()['Url'])
+    parsed = urlparse(r3.json()['Url'])
 
-auth_code = parse_qs(parsed.query)['auth_code'][0]
+    auth_code = parse_qs(parsed.query)['auth_code'][0]
 
-session.set_token(auth_code)
+    session.set_token(auth_code)
 
-response = session.generate_token()
+    response = session.generate_token()
 
-token = response["access_token"]
+    token = response["access_token"]
 
-print(token)
+    # print(token)
+    # print('Got the access token!!!')
 
-print('Got the access token!!!')
+    return token
 
 # try:
 #
