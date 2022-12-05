@@ -51,7 +51,7 @@ def execute_trade():
     spotPrice_Round = round(spotPrice / 100)
     # expiry_date = '22D01'
     buyGap = 15
-    sellGap = 3
+    sellGap = 0
     CE_Buy_StrikeSymbol = 'NSE:BANKNIFTY' + expiry_date + str(
         (spotPrice_Round + buyGap + sellGap + (5 - ((spotPrice_Round + buyGap + sellGap) % 5))) * 100) + 'CE'
     PE_Buy_StrikeSymbol = 'NSE:BANKNIFTY' + expiry_date + str(
