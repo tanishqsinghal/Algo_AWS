@@ -33,7 +33,7 @@ def generate_token():
                                             log_path="")
     print("LOGGED IN")
     send_telegram_message("LOGGED IN")
-    schedule_trades(execute_trade, '09-20-00')
+    schedule_trades(execute_trade, '09-40-00')
 
 def send_telegram_message(request):
     bot_token = '5969891290:AAE13zPtwdc2P3VqZy6o_7opvRHbAtH_vfE'
@@ -267,7 +267,7 @@ def schedule_trades(functionName, timeToExecute):
 schedule.every().monday.at("09:00").do(generate_token)
 schedule.every().tuesday.at("09:00").do(generate_token)
 schedule.every().wednesday.at("09:00").do(generate_token)
-schedule.every().thursday.at("09:00").do(generate_token)
+schedule.every().thursday.at("09:30").do(generate_token)
 schedule.every().friday.at("09:00").do(generate_token)
 # schedule.every().sunday.at("16:58").do(generate_token)
 # schedule.every().sunday.at("13:54").do(schedule_trades, execute_trade, '13-55-00')
