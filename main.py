@@ -34,7 +34,7 @@ def generate_token():
                                             log_path="")
     print("LOGGED IN")
     send_telegram_message("LOGGED IN")
-    schedule_trades(execute_trade, '11:05:00')
+    schedule_trades(execute_trade, '09:20:00')
 
 def send_telegram_message(request):
     bot_token = '5969891290:AAE13zPtwdc2P3VqZy6o_7opvRHbAtH_vfE'
@@ -176,6 +176,7 @@ def execute_trade():
 
 
 def exit_trade(request):
+    send_telegram_message(config["trades_data"])
     spotPrice = config["fyers"].quotes({"symbols": "NSE:NIFTYBANK-INDEX"})['d'][0]['v']['lp']
 
     exitOrderData_Sell = [{
@@ -273,12 +274,13 @@ def schedule_trades(functionName, timeToExecute):
     delay = (executionTime - currentTime).total_seconds()
     if delay >= 0:
         Timer(delay, functionName).start()
+    return
 
 
 schedule.every().monday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().tuesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().wednesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
-schedule.every().thursday.at(convert_time_to_utc("11:00:00")).do(generate_token)
+schedule.every().thursday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().friday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 # schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 # schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(schedule_trades, execute_trade, '13-55-00')
