@@ -1,4 +1,4 @@
-import schedule, time, datetime, requests, json, os
+import schedule, time, datetime, requests, json, os, pytz
 from threading import Timer
 # import pandas as pd
 import datatable as dt
@@ -19,6 +19,7 @@ config = {
 
 
 def generate_token():
+    print("_______________GENERATING TOKEN_________")
     config["access_token"] = login()
 
     # instruments = pd.read_csv('https://public.fyers.in/sym_details/NSE_FO.csv', header=None)
@@ -33,7 +34,7 @@ def generate_token():
                                             log_path="")
     print("LOGGED IN")
     send_telegram_message("LOGGED IN")
-    schedule_trades(execute_trade, '09-40-00')
+    schedule_trades(execute_trade, '11:05:00')
 
 def send_telegram_message(request):
     bot_token = '5969891290:AAE13zPtwdc2P3VqZy6o_7opvRHbAtH_vfE'
@@ -170,7 +171,7 @@ def execute_trade():
     config["trades_data"] = dataToWrite
 
     send_telegram_message(telegram_Message)
-    schedule_trades(exit_trade, '15-05-00')
+    schedule_trades(exit_trade, '15:05:00')
     return
 
 
@@ -255,22 +256,32 @@ def exit_trade(request):
 
     return
 
+def convert_time_to_utc(timerequest):
+    local_timezone = pytz.timezone("Asia/Kolkata")
+    # local_dt = datetime.datetime.utcnow().astimezone(local)
+    local_time = str(datetime.datetime.now().strftime('%Y-%m-%d ')) + str(timerequest)
+    naive = datetime.datetime.strptime(local_time, "%Y-%m-%d %H:%M:%S")
+    local_dt = local_timezone.localize(naive)
+    utc_dt = local_dt.astimezone(pytz.utc)
+    return utc_dt.strftime('%H:%M:%S')
+
 def schedule_trades(functionName, timeToExecute):
+    timeToExecute = str(convert_time_to_utc(timeToExecute))
     currentTime = datetime.datetime.now()
     executionTime = datetime.datetime.now().strftime('%d-%m-%Y') + " " + timeToExecute
-    executionTime = datetime.datetime.strptime(executionTime, '%d-%m-%Y %H-%M-%S')
+    executionTime = datetime.datetime.strptime(executionTime, '%d-%m-%Y %H:%M:%S')
     delay = (executionTime - currentTime).total_seconds()
     if delay >= 0:
         Timer(delay, functionName).start()
 
 
-schedule.every().monday.at("09:00").do(generate_token)
-schedule.every().tuesday.at("09:00").do(generate_token)
-schedule.every().wednesday.at("09:00").do(generate_token)
-schedule.every().thursday.at("09:30").do(generate_token)
-schedule.every().friday.at("09:00").do(generate_token)
-# schedule.every().sunday.at("16:58").do(generate_token)
-# schedule.every().sunday.at("13:54").do(schedule_trades, execute_trade, '13-55-00')
+schedule.every().monday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+schedule.every().tuesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+schedule.every().wednesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+schedule.every().thursday.at(convert_time_to_utc("11:00:00")).do(generate_token)
+schedule.every().friday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+# schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+# schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(schedule_trades, execute_trade, '13-55-00')
 
 while True:
     schedule.run_pending()
