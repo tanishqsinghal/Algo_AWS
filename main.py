@@ -170,8 +170,8 @@ def execute_trade():
     # requests.post(config['request_url'], data=dataToWrite)
     config["trades_data"] = dataToWrite
 
-    send_telegram_message(telegram_Message)
     schedule_trades(exit_trade, '15:05:00')
+    send_telegram_message(telegram_Message)
     return
 
 
