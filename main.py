@@ -1,7 +1,9 @@
 import schedule, time, datetime, requests, json, os, pytz
+import threading, sys
 from threading import Timer
 # import pandas as pd
 import datatable as dt
+from fyers_api.Websocket import ws
 
 from fyers_api import fyersModel, accessToken
 from autologin import *
@@ -14,8 +16,49 @@ config = {
     "client_id": "ORDBWKXRS7-100",
     "secret_key": "5R3786TZ0W",
     "access_token": "",
-    "request_url": "https://sm.affility.store"
+    "request_url": "https://sm.affility.store",
+    "strikes_traded": [],
+    "strikes_entry_price_combined": 0,
+    "strikes_ltp": [0, 0, 0, 0],
+    "stop_loss": 0,
+    "target": 0,
+    "trades_exited": False
 }
+
+
+def custom_message(msg):
+    # print(f"Custom:{msg}")
+    for x in range(4):
+        if msg[0]['symbol'] == config['strikes_traded'][x]:
+            config['strikes_ltp'][x] = msg[0]['ltp']
+
+    combined_price_current = (config['strikes_ltp'][2] + config['strikes_ltp'][3]) - (config['strikes_ltp'][0] + config['strikes_ltp'][1])
+    combined_price_current *= 25
+    print(combined_price_current)
+    if (combined_price_current >= config['stop_loss'] or combined_price_current <= config['target']) and config['trades_exited'] == False:
+        config['trades_exited'] = True
+        pnl = config['strikes_entry_price_combined'] - combined_price_current
+        print(pnl)
+        send_telegram_message('P&L <--> ' + str(pnl))
+        print('EXIT:- ' + str(combined_price_current))
+        # config['fs'].unsubscribe(symbol=config['strikes_traded'])
+        # exit_trade()
+        sys.exit()
+
+
+def run_websocket():
+    Access_Token = config["client_id"] + ':' + config["access_token"]
+    data_type = "symbolData"
+    fs = ws.FyersSocket(access_token=Access_Token, run_background=False, log_path='')
+    fs.websocket_data = custom_message
+    config['fs'] = fs
+    print("CONFIGURATION")
+    # fs.subscribe(symbol=config["strikes_traded"], data_type=data_type)
+    # fs.keep_running()
+    config['websocket_process'] = threading.Thread(target=fs.subscribe, args=(config["strikes_traded"], data_type,))
+    config['websocket_process'].daemon = True
+    config['websocket_process'].start()
+
 
 
 def generate_token():
@@ -132,6 +175,7 @@ def execute_trade():
         'orderPlacementStatus': 1,
         'strikes': [],
         'strikesLTPEntry': [],
+        'combinedEntryPrice': 0,
         'spotLTPEntry': spotPrice,
         'orderData': [],
         'orderEntryResponse': []
@@ -145,6 +189,19 @@ def execute_trade():
     PE_Buy_StrikeSymbol_LTP = config["fyers"].quotes({"symbols": PE_Buy_StrikeSymbol})['d'][0]['v']['lp']
     CE_Sell_StrikeSymbol_LTP = config["fyers"].quotes({"symbols": CE_Sell_StrikeSymbol})['d'][0]['v']['lp']
     PE_Sell_StrikeSymbol_LTP = config["fyers"].quotes({"symbols": PE_Sell_StrikeSymbol})['d'][0]['v']['lp']
+
+    combined_price_entry = (CE_Sell_StrikeSymbol_LTP + PE_Sell_StrikeSymbol_LTP) - (CE_Buy_StrikeSymbol_LTP + PE_Buy_StrikeSymbol_LTP)
+    dataToWrite['combinedEntryPrice'] = combined_price_entry
+
+    stop_loss = combined_price_entry * 25 * 1.01
+    target = combined_price_entry * 25 * 0.99
+
+    config['strikes_entry_price_combined'] = combined_price_entry * 25
+    config["stop_loss"] = stop_loss
+    config["target"] = target
+    print("Entry:- " + str(combined_price_entry * 25))
+    print("SL:-" + str(stop_loss))
+    print("Target:- " + str(target))
 
     dataToWrite['strikesLTPEntry'].append(CE_Buy_StrikeSymbol_LTP)
     dataToWrite['strikesLTPEntry'].append(PE_Buy_StrikeSymbol_LTP)
@@ -172,6 +229,10 @@ def execute_trade():
 
     schedule_trades(exit_trade, '15:05:00')
     send_telegram_message(telegram_Message)
+
+    config["strikes_traded"] = [CE_Buy_StrikeSymbol, PE_Buy_StrikeSymbol, CE_Sell_StrikeSymbol, PE_Sell_StrikeSymbol]
+    config["strikes_ltp"] = [CE_Buy_StrikeSymbol_LTP, PE_Buy_StrikeSymbol_LTP, CE_Sell_StrikeSymbol_LTP, PE_Sell_StrikeSymbol_LTP]
+    run_websocket()
     return
 
 
@@ -257,6 +318,23 @@ def exit_trade(request):
 
     return
 
+
+# def generate_token_test():
+#     print("_______________GENERATING TOKEN_________")
+#     config["access_token"] = login()
+#
+#     instruments = pd.read_csv('https://public.fyers.in/sym_details/NSE_FO.csv', header=None)
+#     ism = instruments[instruments[13] == '{}'.format('BANKNIFTY')]
+#     config["expiry_date_banknifty"] = ism[9].tolist()[0][13:-7]
+#
+#     config["fyers"] = fyersModel.FyersModel(client_id=config["client_id"], token=config["access_token"],
+#                                             log_path="")
+#     print(config["access_token"])
+#     print("LOGGED IN")
+#     execute_trade()
+
+# generate_token_test()
+
 def convert_time_to_utc(timerequest):
     local_timezone = pytz.timezone("Asia/Kolkata")
     # local_dt = datetime.datetime.utcnow().astimezone(local)
@@ -272,6 +350,7 @@ def schedule_trades(functionName, timeToExecute):
     executionTime = datetime.datetime.now().strftime('%d-%m-%Y') + " " + timeToExecute
     executionTime = datetime.datetime.strptime(executionTime, '%d-%m-%Y %H:%M:%S')
     delay = (executionTime - currentTime).total_seconds()
+    send_telegram_message(str(functionName) + "WITH DELAY " + str(delay) + " SCHEDULED")
     if delay >= 0:
         Timer(delay, functionName).start()
     return
