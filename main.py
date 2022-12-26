@@ -39,7 +39,7 @@ def custom_message(msg):
         config['trades_exited'] = True
         pnl = config['strikes_entry_price_combined'] - combined_price_current
         print(pnl)
-        send_telegram_message('P&L <--> ' + str(pnl))
+        send_telegram_message('P&L <--> ' + str(round(pnl, 2)))
         print('EXIT:- ' + str(combined_price_current))
         # config['fs'].unsubscribe(symbol=config['strikes_traded'])
         # exit_trade()
@@ -193,8 +193,8 @@ def execute_trade():
     combined_price_entry = (CE_Sell_StrikeSymbol_LTP + PE_Sell_StrikeSymbol_LTP) - (CE_Buy_StrikeSymbol_LTP + PE_Buy_StrikeSymbol_LTP)
     dataToWrite['combinedEntryPrice'] = combined_price_entry
 
-    stop_loss = combined_price_entry * 25 * 1.01
-    target = combined_price_entry * 25 * 0.99
+    stop_loss = combined_price_entry * 25 * 1.3
+    target = combined_price_entry * 25 * 0.65
 
     config['strikes_entry_price_combined'] = combined_price_entry * 25
     config["stop_loss"] = stop_loss
