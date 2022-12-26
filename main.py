@@ -44,6 +44,7 @@ def custom_message(msg):
         # config['fs'].unsubscribe(symbol=config['strikes_traded'])
         # exit_trade()
         sys.exit()
+        exit_trade()
 
 
 def run_websocket():
@@ -236,7 +237,7 @@ def execute_trade():
     return
 
 
-def exit_trade(request):
+def exit_trade():
     send_telegram_message(config["trades_data"])
     spotPrice = config["fyers"].quotes({"symbols": "NSE:NIFTYBANK-INDEX"})['d'][0]['v']['lp']
 
@@ -350,7 +351,7 @@ def schedule_trades(functionName, timeToExecute):
     executionTime = datetime.datetime.now().strftime('%d-%m-%Y') + " " + timeToExecute
     executionTime = datetime.datetime.strptime(executionTime, '%d-%m-%Y %H:%M:%S')
     delay = (executionTime - currentTime).total_seconds()
-    send_telegram_message(str(functionName) + "WITH DELAY " + str(delay) + " SCHEDULED")
+    # send_telegram_message(str(functionName) + "WITH DELAY " + str(delay) + " SCHEDULED")
     if delay >= 0:
         Timer(delay, functionName).start()
     return
