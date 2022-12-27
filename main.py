@@ -34,7 +34,7 @@ def custom_message(msg):
 
     combined_price_current = (config['strikes_ltp'][2] + config['strikes_ltp'][3]) - (config['strikes_ltp'][0] + config['strikes_ltp'][1])
     combined_price_current *= 25
-    print(combined_price_current)
+    # print(combined_price_current)
     if (combined_price_current >= config['stop_loss'] or combined_price_current <= config['target']) and config['trades_exited'] == False:
         config['trades_exited'] = True
         pnl = config['strikes_entry_price_combined'] - combined_price_current
@@ -358,7 +358,7 @@ def schedule_trades(functionName, timeToExecute):
 
 
 schedule.every().monday.at(convert_time_to_utc("09:00:00")).do(generate_token)
-schedule.every().tuesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+schedule.every().tuesday.at(convert_time_to_utc("09:15:00")).do(generate_token)
 schedule.every().wednesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().thursday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().friday.at(convert_time_to_utc("09:00:00")).do(generate_token)
