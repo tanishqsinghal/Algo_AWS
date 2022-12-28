@@ -216,7 +216,9 @@ def execute_trade():
                        CE_Buy_StrikeSymbol[-7:] + " <- B -> " + str(CE_Buy_StrikeSymbol_LTP) + "\n" + \
                        PE_Buy_StrikeSymbol[-7:] + " <- B -> " + str(PE_Buy_StrikeSymbol_LTP) + "\n" + \
                        CE_Sell_StrikeSymbol[-7:] + " <- S -> " + str(CE_Sell_StrikeSymbol_LTP) + "\n" + \
-                       PE_Sell_StrikeSymbol[-7:] + " <- S -> " + str(PE_Sell_StrikeSymbol_LTP)
+                       PE_Sell_StrikeSymbol[-7:] + " <- S -> " + str(PE_Sell_StrikeSymbol_LTP) + "\n" + \
+                       "SL <-> " + str(round((stop_loss - combined_price_entry * 25), 2)) + "\n" + \
+                       "Target <-> " + str(round((combined_price_entry * 25 - target), 2))
 
     # file = open(file_path, 'w')
     # json.dump(dataToWrite, file)
@@ -238,7 +240,6 @@ def execute_trade():
 
 
 def exit_trade():
-    send_telegram_message(config["trades_data"])
     spotPrice = config["fyers"].quotes({"symbols": "NSE:NIFTYBANK-INDEX"})['d'][0]['v']['lp']
 
     exitOrderData_Sell = [{
@@ -290,6 +291,7 @@ def exit_trade():
                          (PE_Buy_StrikeSymbol_LTP - file['strikesLTPEntry'][1]) + \
                          (file['strikesLTPEntry'][2] - CE_Sell_StrikeSymbol_LTP) + \
                          (file['strikesLTPEntry'][3] - PE_Sell_StrikeSymbol_LTP)
+    dataToWrite['pnl'] *= 25
 
     dataToWrite['strikesLTPExit'].append(CE_Buy_StrikeSymbol_LTP)
     dataToWrite['strikesLTPExit'].append(PE_Buy_StrikeSymbol_LTP)
@@ -301,7 +303,7 @@ def exit_trade():
                        PE_Buy_StrikeSymbol[-7:] + " <- S -> " + str(PE_Buy_StrikeSymbol_LTP) + "\n" + \
                        CE_Sell_StrikeSymbol[-7:] + " <- B -> " + str(CE_Sell_StrikeSymbol_LTP) + "\n" + \
                        PE_Sell_StrikeSymbol[-7:] + " <- B -> " + str(PE_Sell_StrikeSymbol_LTP) + "\n" + \
-                       "P&L <--> " + str(dataToWrite['pnl'])
+                       "P&L <--> " + str(round(dataToWrite['pnl'], 2))
 
     combinedDataToWrite = dict(list(file.items()) + list(dataToWrite.items()))
     # file = open(file_path, 'w')
@@ -358,7 +360,7 @@ def schedule_trades(functionName, timeToExecute):
 
 
 schedule.every().monday.at(convert_time_to_utc("09:00:00")).do(generate_token)
-schedule.every().tuesday.at(convert_time_to_utc("09:15:00")).do(generate_token)
+schedule.every().tuesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().wednesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().thursday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().friday.at(convert_time_to_utc("09:00:00")).do(generate_token)
