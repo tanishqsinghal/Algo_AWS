@@ -43,8 +43,8 @@ def custom_message(msg):
         print('EXIT:- ' + str(combined_price_current))
         # config['fs'].unsubscribe(symbol=config['strikes_traded'])
         # exit_trade()
+        threading.Thread(target=exit_trade).start()
         sys.exit()
-        exit_trade()
 
 
 def run_websocket():
@@ -64,7 +64,22 @@ def run_websocket():
 
 def generate_token():
     print("_______________GENERATING TOKEN_________")
-    config["access_token"] = login()
+    file = json.load(open("token.json", 'r'))
+    if file['date'] == str(datetime.date.today()):
+        config["access_token"] = file['token']
+        print("FOUND")
+    else:
+        config["access_token"] = login()
+        data_to_write = {
+            'date': str(datetime.date.today()),
+            'token': config["access_token"]
+        }
+        file = open("token.json", 'w')
+        json.dump(data_to_write, file)
+        file.close()
+        print("ADDED")
+
+    # config["access_token"] = login()
 
     # instruments = pd.read_csv('https://public.fyers.in/sym_details/NSE_FO.csv', header=None)
     # ism = instruments[instruments[13] == '{}'.format('BANKNIFTY')]
@@ -197,6 +212,7 @@ def execute_trade():
     stop_loss = combined_price_entry * 25 * 1.3
     target = combined_price_entry * 25 * 0.65
 
+    config['trades_exited'] = False
     config['strikes_entry_price_combined'] = combined_price_entry * 25
     config["stop_loss"] = stop_loss
     config["target"] = target
