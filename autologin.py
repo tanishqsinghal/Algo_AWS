@@ -1,20 +1,31 @@
-import requests
 import configparser
 from urllib.parse import urlparse, parse_qs
 
 from fyers_api import fyersModel, accessToken
 
+import schedule, time, datetime, requests, json, os, pytz
+import threading, sys
+from threading import Timer
+# import pandas as pd
+import datatable as dt
 
-config = configparser.ConfigParser()
-config.read('config.ini')
-client_id = config['fyers']['app_id']
+from config_file import *
+
+# session = accessToken.SessionModel(client_id='ORDBWKXRS7-100', secret_key='5R3786TZ0W',
+#                                    redirect_uri='https://www.google.co.in', response_type='code',
+#                                    grant_type='authorization_code')
+
+
+config_data = configparser.ConfigParser()
+config_data.read('config.ini')
+client_id = config_data['fyers']['app_id']
 app_id = client_id[:-4]
-secret_key = config['fyers']['app_secret']
-redirect_uri = config['fyers']['redirect_url']
-username = config['fyers']['user_id']
-password = config['fyers']['password']
-pan = config['fyers']['pan']
-pin = int(config['fyers']['two_fa'])
+secret_key = config_data['fyers']['app_secret']
+redirect_uri = config_data['fyers']['redirect_url']
+username = config_data['fyers']['user_id']
+password = config_data['fyers']['password']
+pan = config_data['fyers']['pan']
+pin = int(config_data['fyers']['two_fa'])
 
 
 def login():
@@ -69,157 +80,64 @@ def login():
 
     return token
 
-# try:
-#
-#     with open("access_token.csv", "a") as fyers_token:
-#
-#         fyers_token.write(str(client_id) + "," + str(token))
-#
-#         print("Wrote ---->", str(client_id) + "," + str(token))
-#
-#         fyers_token.write("\n")
-#
-#         fyers_token.close()
-#
-#     print("Access token generated successfully")
-#
-# except:
-#
-#     print("Some went wrong Credentials or Network Connetivity")
+
+def generate_token():
+    print("_______________GENERATING TOKEN_________")
+    file = json.load(open("token.json", 'r'))
+    if file['date'] == str(datetime.date.today()):
+        config["access_token"] = file['token']
+        print("FOUND")
+    else:
+        config["access_token"] = login()
+        data_to_write = {
+            'date': str(datetime.date.today()),
+            'token': config["access_token"]
+        }
+        file = open("token.json", 'w')
+        json.dump(data_to_write, file)
+        file.close()
+        print("ADDED")
+
+    # config["access_token"] = login()
+
+    # instruments = pd.read_csv('https://public.fyers.in/sym_details/NSE_FO.csv', header=None)
+    # ism = instruments[instruments[13] == '{}'.format('BANKNIFTY')]
+    # config["expiry_date_banknifty"] = ism[9].tolist()[0][13:-7]
+
+    instruments = dt.fread('https://public.fyers.in/sym_details/NSE_FO.csv')
+    instruments = instruments.to_list()
+    config["expiry_date_banknifty"] = instruments[9][instruments[13].index('BANKNIFTY')][13:-7]
+
+    config["fyers"] = fyersModel.FyersModel(client_id=config["client_id"], token=config["access_token"],
+                                            log_path="")
+    print("LOGGED IN")
+    send_telegram_message("LOGGED IN")
+    import algo_simple_straddle
+    schedule_trades(algo_simple_straddle.execute_trade, '09:20:00')
 
 
 
+def schedule_trades(functionName, timeToExecute):
+    timeToExecute = str(convert_time_to_utc(timeToExecute))
+    currentTime = datetime.datetime.now()
+    executionTime = datetime.datetime.now().strftime('%d-%m-%Y') + " " + timeToExecute
+    executionTime = datetime.datetime.strptime(executionTime, '%d-%m-%Y %H:%M:%S')
+    delay = (executionTime - currentTime).total_seconds()
+    # send_telegram_message(str(functionName) + "WITH DELAY " + str(delay) + " SCHEDULED")
+    if delay >= 0:
+        Timer(delay, functionName).start()
+    return
 
 
+schedule.every().monday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+schedule.every().tuesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+schedule.every().wednesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+schedule.every().thursday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+schedule.every().friday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+# schedule.every().saturday.at("11:03:00").do(generate_token)
+# schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(generate_token)
+# schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(schedule_trades, execute_trade, '13-55-00')
 
-
-
-
-# import pyotp, datetime
-# from fyers_api import accessToken
-# import configparser
-# from selenium import webdriver
-# from selenium.webdriver.firefox.options import Options
-# from selenium.webdriver.support.ui import WebDriverWait
-# from selenium.webdriver.support import expected_conditions as EC
-# from selenium.webdriver.common.by import By
-# from time import sleep
-# import urllib.parse as urlparse
-#
-#
-# # get all required credentials from config.ini file
-#
-# config = configparser.ConfigParser()
-# config.read('config.ini')
-# app_id = config['fyers']['app_id']
-# app_secret = config['fyers']['app_secret']
-# redirect_url = config['fyers']['redirect_url']
-# user_id = config['fyers']['user_id']
-# password = config['fyers']['password']
-# two_fa = config['fyers']['two_fa']
-#
-#
-# # generate the session url
-# session=accessToken.SessionModel(client_id=app_id,
-#                                     secret_key= app_secret,
-#                                     redirect_uri= redirect_url,
-#                                     response_type='code',
-#                                     grant_type='authorization_code')
-# session_url =  session.generate_authcode()
-#
-# # to automate the login procedure, I have used selenium webdriver
-# # launch firefox  driver
-# options = Options()
-# options.add_argument('--headless')
-# options.add_argument('--disable-gpu')
-# driver = webdriver.Firefox(executable_path=r'geckodriver.exe', options=options)
-# driver.get(session_url)
-#
-#
-# # initiate longin
-#
-# xpath = ["//*[@id='fy_client_id']", "//*[@id='fy_client_pwd']"]
-# keys = [user_id, password]
-#
-# for i in range(2):
-#     driver.find_element(by= By.XPATH, value= xpath[i]).send_keys(keys[i])
-#     sleep(1)
-#     driver.find_element(by= By.XPATH, value= xpath[i]).submit()
-#     sleep(1)
-#
-# for i in range(4):
-#     digit = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "/html/body/section[8]/div[3]/div[3]/form/div[2]/input[{}]".format(i+1))))
-#     digit.send_keys(two_fa[i])
-#     sleep(0.1)
-#
-# submit = WebDriverWait(driver, 20).until(lambda x: x.find_element(By.XPATH,"//*[@id='verifyPinSubmit']"))
-# submit.click()
-# sleep(2)
-#
-# # login successful
-# # get the authorization code
-#
-# current_url = driver.current_url
-# driver.close()
-# parsed = urlparse.urlparse(current_url)
-# auth_code = urlparse.parse_qs(parsed.query)['auth_code'][0]
-#
-# print(auth_code)
-
-
-
-
-
-
-
-# form = WebDriverWait(driver, 10).until(
-#
-#             EC.visibility_of_element_located((By.ID, 'confirmOtpForm')))
-#
-# totp = pyotp.TOTP("HLROG5N5T4DQ32V232ICMWG5XQV5LTYQ")
-#
-# token = totp.now()
-#
-# digits = [d for d in token]
-#
-# time_remaining = totp.interval - datetime.datetime.now().timestamp() % totp.interval
-#
-# print(F"Time Remaining is {time_remaining}")
-#
-#
-# if time_remaining <= 8:
-#
-#     print("Sleeping for some time as time remaining is less than 8")
-#
-#     sleep(time_remaining)
-#
-#     token = totp.now()
-#
-#     digits = [d for d in token]
-#
-#
-# driver.find_element(By.XPATH, "//form[@id='confirmOtpForm']").find_element(By.ID, "first").send_keys(digits[0])
-#
-# driver.find_element(By.XPATH, "//form[@id='confirmOtpForm']").find_element(By.ID, "second").send_keys(
-#
-#     digits[1])
-#
-# driver.find_element(By.XPATH, "//form[@id='confirmOtpForm']").find_element(By.ID, "third").send_keys(digits[2])
-#
-# driver.find_element(By.XPATH, "//form[@id='confirmOtpForm']").find_element(By.ID, "fourth").send_keys(
-#
-#     digits[3])
-#
-# driver.find_element(By.XPATH, "//form[@id='confirmOtpForm']").find_element(By.ID, "fifth").send_keys(
-#
-#     digits[4])
-#
-# driver.find_element(By.XPATH, "//form[@id='confirmOtpForm']").find_element(By.ID, "sixth").send_keys(
-#
-#     digits[5])
-#
-# sleep(1)
-#
-# driver.find_element(By.ID, "confirmOtpSubmit").click()
-
-# logging.info("Entered the TOTP Details")
+while True:
+    schedule.run_pending()
+    time.sleep(60)
