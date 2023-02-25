@@ -112,8 +112,10 @@ def generate_token():
                                             log_path="")
     print("LOGGED IN")
     send_telegram_message("LOGGED IN")
-    import algo_simple_straddle
-    schedule_trades(algo_simple_straddle.execute_trade, '09:20:00')
+    # import algo_simple_straddle
+    # algo_simple_straddle.start_algo()
+    import algo_920_sl
+    algo_920_sl.start_algo()
 
 
 
@@ -137,7 +139,7 @@ schedule.every().friday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 # schedule.every().saturday.at("11:03:00").do(generate_token)
 # schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 # schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(schedule_trades, execute_trade, '13-55-00')
-
+# generate_token()
 while True:
     schedule.run_pending()
     time.sleep(60)

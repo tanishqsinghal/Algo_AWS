@@ -281,3 +281,7 @@ def exit_trade():
     send_telegram_message(telegram_Message)
 
     return
+
+
+def start_algo():
+    schedule_trades(execute_trade, '09:20:00')

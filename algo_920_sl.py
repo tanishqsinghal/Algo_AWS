@@ -5,6 +5,14 @@ from fyers_api.Websocket import ws
 
 from config_file import *
 
+algo_config = {
+    "strikes_traded": ['x', 'x', 'x'],
+    "strikes_ltp": [0, 0, 0],
+    "stop_loss": [0, 0, 0],
+    "target": 0,
+    "stop_loss_hit": False,
+    "trades_exited": False
+}
 
 def schedule_trades(functionName, timeToExecute):
     timeToExecute = str(convert_time_to_utc(timeToExecute))
@@ -20,23 +28,19 @@ def schedule_trades(functionName, timeToExecute):
 
 def custom_message(msg):
     # print(f"Custom:{msg}")
-    for x in range(4):
-        if msg[0]['symbol'] == config['strikes_traded'][x]:
-            config['strikes_ltp'][x] = msg[0]['ltp']
+    for x in range(2):
+        if msg[0]['symbol'] == algo_config['strikes_traded'][x]:
+            algo_config['strikes_ltp'][x] = msg[0]['ltp']
 
-    combined_price_current = (config['strikes_ltp'][2] + config['strikes_ltp'][3]) - (config['strikes_ltp'][0] + config['strikes_ltp'][1])
-    combined_price_current *= 25
-    # print(combined_price_current)
-    if (combined_price_current >= config['stop_loss'] or combined_price_current <= config['target']) and config['trades_exited'] == False:
-        config['trades_exited'] = True
-        pnl = config['strikes_entry_price_combined'] - combined_price_current
-        print(pnl)
-        send_telegram_message('P&L <--> ' + str(round(pnl, 2)))
-        print('EXIT:- ' + str(combined_price_current))
-        # config['fs'].unsubscribe(symbol=config['strikes_traded'])
-        # exit_trade()
-        threading.Thread(target=exit_trade).start()
-        sys.exit()
+
+    if algo_config['stop_loss_hit'] == False:
+        for x in range(2):
+            if algo_config['strikes_ltp'][x] >= algo_config['stop_loss'][x]:
+                algo_config['stop_loss_hit'] = True
+
+                threading.Thread(target=send_telegram_message, args=('SL:- ' + algo_config['strikes_traded'][x])).start()
+                threading.Thread(target=execute_trade(), args=(x)).start()
+                sys.exit()
 
 
 def run_websocket():
@@ -48,12 +52,42 @@ def run_websocket():
     print("CONFIGURATION")
     # fs.subscribe(symbol=config["strikes_traded"], data_type=data_type)
     # fs.keep_running()
-    config['websocket_process'] = threading.Thread(target=fs.subscribe, args=(config["strikes_traded"], data_type,))
+    config['websocket_process'] = threading.Thread(target=fs.subscribe, args=(algo_config["strikes_traded"][:-1], data_type,))
     config['websocket_process'].daemon = True
     config['websocket_process'].start()
 
 
-def execute_trade():
+def custom_message_2(msg):
+    algo_config['strikes_ltp'][2] = msg[0]['ltp']
+
+
+    if algo_config['trades_exited'] == False:
+        if algo_config['strikes_ltp'][2] >= algo_config['stop_loss'][2]:
+            algo_config['trades_exited'] = True
+
+            threading.Thread(target=send_telegram_message, args=('SL:- ' + str(algo_config['strikes_ltp'][2]))).start()
+            sys.exit()
+        if algo_config['strikes_ltp'][2] <= algo_config['target']:
+            algo_config['trades_exited'] = True
+
+            threading.Thread(target=send_telegram_message, args=('Target:- ' + str(algo_config['strikes_ltp'][2]))).start()
+            sys.exit()
+
+
+def run_websocket_2():
+    Access_Token = config["client_id"] + ':' + config["access_token"]
+    data_type = "symbolData"
+    fs = ws.FyersSocket(access_token=Access_Token, run_background=False, log_path='')
+    fs.websocket_data = custom_message_2
+    config['fs'] = fs
+    print("CONFIGURATION_2")
+    # fs.subscribe(symbol=config["strikes_traded"], data_type=data_type)
+    # fs.keep_running()
+    config['websocket_process'] = threading.Thread(target=fs.subscribe, args=(algo_config["strikes_traded"][2], data_type,))
+    config['websocket_process'].daemon = True
+    config['websocket_process'].start()
+
+def execute_trade(sl_side):
     print("TRADES EXECUTED")
     spotPrice = config["fyers"].quotes({"symbols": "NSE:NIFTYBANK-INDEX"})['d'][0]['v']['lp']
     expiry_date = config["expiry_date_banknifty"]
@@ -61,143 +95,78 @@ def execute_trade():
     # expiry_date = '22D01'
     buyGap = 15
     sellGap = 0
-    CE_Buy_StrikeSymbol = 'NSE:BANKNIFTY' + expiry_date + str(
-        (spotPrice_Round + buyGap + sellGap + (5 - ((spotPrice_Round + buyGap + sellGap) % 5))) * 100) + 'CE'
-    PE_Buy_StrikeSymbol = 'NSE:BANKNIFTY' + expiry_date + str(
-        (spotPrice_Round - buyGap - sellGap - ((spotPrice_Round - buyGap - sellGap) % 5)) * 100) + 'PE'
     CE_Sell_StrikeSymbol = 'NSE:BANKNIFTY' + expiry_date + str((spotPrice_Round + sellGap) * 100) + 'CE'
     PE_Sell_StrikeSymbol = 'NSE:BANKNIFTY' + expiry_date + str((spotPrice_Round - sellGap) * 100) + 'PE'
 
-    orderData_Buy = [{
-        "symbol": CE_Buy_StrikeSymbol,
-        "qty": 25,
-        "type": 2,
-        "side": 1,
-        "productType": "INTRADAY",
-        "limitPrice": 0,
-        "stopPrice": 0,
-        "disclosedQty": 0,
-        "validity": "DAY",
-        "offlineOrder": "False",
-        "stopLoss": 0,
-        "takeProfit": 0
-    },
-        {
-            "symbol": PE_Buy_StrikeSymbol,
-            "qty": 25,
-            "type": 2,
-            "side": 1,
-            "productType": "INTRADAY",
-            "limitPrice": 0,
-            "stopPrice": 0,
-            "disclosedQty": 0,
-            "validity": "DAY",
-            "offlineOrder": "False",
-            "stopLoss": 0,
-            "takeProfit": 0
-        }]
+    # target_strike = ''
+    target_strike = CE_Sell_StrikeSymbol if sl_side == 0 else PE_Sell_StrikeSymbol
 
-    orderData_Sell = [{
-        "symbol": CE_Sell_StrikeSymbol,
-        "qty": 25,
-        "type": 2,
-        "side": -1,
-        "productType": "INTRADAY",
-        "limitPrice": 0,
-        "stopPrice": 0,
-        "disclosedQty": 0,
-        "validity": "DAY",
-        "offlineOrder": "False",
-        "stopLoss": 0,
-        "takeProfit": 0
-    },
-        {
-            "symbol": PE_Sell_StrikeSymbol,
-            "qty": 25,
-            "type": 2,
-            "side": -1,
-            "productType": "INTRADAY",
-            "limitPrice": 0,
-            "stopPrice": 0,
-            "disclosedQty": 0,
-            "validity": "DAY",
-            "offlineOrder": "False",
-            "stopLoss": 0,
-            "takeProfit": 0
-        }]
+    strike_LTP = config["fyers"].quotes({"symbols": target_strike})['d'][0]['v']['lp']
 
-    # config["fyers"].place_basket_orders(orderData_Buy)
-    # time.sleep(1)
-    # config["fyers"].place_basket_orders(orderData_Sell)
+    date = datetime.datetime.now()
+    weekday = date.weekday()
+    stop_loss_multipliers = [1.2, 1.2, 1.2, 1.2, 1.2, 1.2]
+    target_multipliers = [0.75, 0.75, 0.75, 0.75, 0.75, 0.75]
+    stop_loss = strike_LTP * stop_loss_multipliers[weekday]
+    target = strike_LTP * target_multipliers[weekday]
 
-    dataToWrite = {
-        'response': 0,
-        'orderPlacementStatus': 1,
-        'strikes': [],
-        'strikesLTPEntry': [],
-        'combinedEntryPrice': 0,
-        'spotLTPEntry': spotPrice,
-        'orderData': [],
-        'orderEntryResponse': []
-    }
-    dataToWrite['strikes'].append(CE_Buy_StrikeSymbol)
-    dataToWrite['strikes'].append(PE_Buy_StrikeSymbol)
-    dataToWrite['strikes'].append(CE_Sell_StrikeSymbol)
-    dataToWrite['strikes'].append(PE_Sell_StrikeSymbol)
+    algo_config['trades_exited'] = False
+    algo_config["stop_loss"][2] = stop_loss
+    algo_config["target"] = target
+    algo_config["strikes_traded"][2] = target_strike
+    algo_config["strikes_ltp"][2] = strike_LTP
 
-    CE_Buy_StrikeSymbol_LTP = config["fyers"].quotes({"symbols": CE_Buy_StrikeSymbol})['d'][0]['v']['lp']
-    PE_Buy_StrikeSymbol_LTP = config["fyers"].quotes({"symbols": PE_Buy_StrikeSymbol})['d'][0]['v']['lp']
-    CE_Sell_StrikeSymbol_LTP = config["fyers"].quotes({"symbols": CE_Sell_StrikeSymbol})['d'][0]['v']['lp']
-    PE_Sell_StrikeSymbol_LTP = config["fyers"].quotes({"symbols": PE_Sell_StrikeSymbol})['d'][0]['v']['lp']
-
-    combined_price_entry = (CE_Sell_StrikeSymbol_LTP + PE_Sell_StrikeSymbol_LTP) - (CE_Buy_StrikeSymbol_LTP + PE_Buy_StrikeSymbol_LTP)
-    dataToWrite['combinedEntryPrice'] = combined_price_entry
-
-    stop_loss = combined_price_entry * 25 * 1.3
-    target = combined_price_entry * 25 * 0.65
-
-    config['trades_exited'] = False
-    config['strikes_entry_price_combined'] = combined_price_entry * 25
-    config["stop_loss"] = stop_loss
-    config["target"] = target
-    print("Entry:- " + str(combined_price_entry * 25))
-    print("SL:-" + str(stop_loss))
-    print("Target:- " + str(target))
-
-    dataToWrite['strikesLTPEntry'].append(CE_Buy_StrikeSymbol_LTP)
-    dataToWrite['strikesLTPEntry'].append(PE_Buy_StrikeSymbol_LTP)
-    dataToWrite['strikesLTPEntry'].append(CE_Sell_StrikeSymbol_LTP)
-    dataToWrite['strikesLTPEntry'].append(PE_Sell_StrikeSymbol_LTP)
-
-    dataToWrite['orderData'].append(orderData_Buy)
-    dataToWrite['orderData'].append(orderData_Sell)
 
     telegram_Message = "Entry\nBANKNIFTY <-> " + str(spotPrice) + "\n" + \
-                       CE_Buy_StrikeSymbol[-7:] + " <- B -> " + str(CE_Buy_StrikeSymbol_LTP) + "\n" + \
-                       PE_Buy_StrikeSymbol[-7:] + " <- B -> " + str(PE_Buy_StrikeSymbol_LTP) + "\n" + \
-                       CE_Sell_StrikeSymbol[-7:] + " <- S -> " + str(CE_Sell_StrikeSymbol_LTP) + "\n" + \
-                       PE_Sell_StrikeSymbol[-7:] + " <- S -> " + str(PE_Sell_StrikeSymbol_LTP) + "\n" + \
-                       "SL <-> " + str(round((stop_loss - combined_price_entry * 25), 2)) + "\n" + \
-                       "Target <-> " + str(round((combined_price_entry * 25 - target), 2))
+                       target_strike[-7:] + " <- S -> " + str(strike_LTP) + "\n" + \
+                       "SL <-> " + str(round(stop_loss, 2)) + "\n" + \
+                       "Target <-> " + str(round(target, 2))
 
-    # file = open(file_path, 'w')
-    # json.dump(dataToWrite, file)
-    # file.close()
-    # print('FILE CREATED')
-    # file_json = json.load(open(file_path, 'r'))
-    # print(file_json)
-
-    # requests.post(config['request_url'], data=dataToWrite)
-    config["trades_data"] = dataToWrite
-
-    schedule_trades(exit_trade, '15:05:00')
     send_telegram_message(telegram_Message)
 
-    config["strikes_traded"] = [CE_Buy_StrikeSymbol, PE_Buy_StrikeSymbol, CE_Sell_StrikeSymbol, PE_Sell_StrikeSymbol]
-    config["strikes_ltp"] = [CE_Buy_StrikeSymbol_LTP, PE_Buy_StrikeSymbol_LTP, CE_Sell_StrikeSymbol_LTP, PE_Sell_StrikeSymbol_LTP]
     run_websocket()
     return
 
+def pre_trade():
+    print("TRADES EXECUTED")
+    spotPrice = config["fyers"].quotes({"symbols": "NSE:NIFTYBANK-INDEX"})['d'][0]['v']['lp']
+    expiry_date = config["expiry_date_banknifty"]
+    spotPrice_Round = round(spotPrice / 100)
+    # expiry_date = '22D01'
+    buyGap = 15
+    sellGap = 0
+    CE_Sell_StrikeSymbol = 'NSE:BANKNIFTY' + expiry_date + str((spotPrice_Round + sellGap) * 100) + 'CE'
+    PE_Sell_StrikeSymbol = 'NSE:BANKNIFTY' + expiry_date + str((spotPrice_Round - sellGap) * 100) + 'PE'
+
+    CE_Sell_StrikeSymbol_LTP = config["fyers"].quotes({"symbols": CE_Sell_StrikeSymbol})['d'][0]['v']['lp']
+    PE_Sell_StrikeSymbol_LTP = config["fyers"].quotes({"symbols": PE_Sell_StrikeSymbol})['d'][0]['v']['lp']
+
+    date = datetime.datetime.now()
+    weekday = date.weekday()
+    stop_loss_multipliers = [1.2, 1.2, 1.2, 1.2, 1.2, 1.2]
+    stop_loss_CE = CE_Sell_StrikeSymbol_LTP * stop_loss_multipliers[weekday]
+    stop_loss_PE = PE_Sell_StrikeSymbol_LTP * stop_loss_multipliers[weekday]
+
+    algo_config['stop_loss_hit'] = False
+    algo_config["stop_loss"][0] = stop_loss_CE
+    algo_config["stop_loss"][1] = stop_loss_PE
+    algo_config["strikes_traded"][0] = CE_Sell_StrikeSymbol
+    algo_config["strikes_traded"][1] = PE_Sell_StrikeSymbol
+    algo_config["strikes_ltp"][0] = CE_Sell_StrikeSymbol_LTP
+    algo_config["strikes_ltp"][1] = PE_Sell_StrikeSymbol_LTP
+
+
+    telegram_Message = date.strftime("%A") + "\n" + \
+                       "BANKNIFTY <-> " + str(spotPrice) + "\n" + \
+                       CE_Sell_StrikeSymbol[-7:] + " <- S -> " + str(CE_Sell_StrikeSymbol_LTP) + "\n" + \
+                       PE_Sell_StrikeSymbol[-7:] + " <- S -> " + str(PE_Sell_StrikeSymbol_LTP) + "\n" + \
+                       "SL_CE <-> " + str(round(stop_loss_CE, 2)) + "\n" + \
+                       "SL_PE <-> " + str(round(stop_loss_PE, 2))
+
+    send_telegram_message(telegram_Message)
+
+    run_websocket()
+    return
 
 def exit_trade():
     spotPrice = config["fyers"].quotes({"symbols": "NSE:NIFTYBANK-INDEX"})['d'][0]['v']['lp']
@@ -280,3 +249,7 @@ def exit_trade():
     send_telegram_message(telegram_Message)
 
     return
+
+def start_algo():
+    # pre_trade()
+    schedule_trades(pre_trade, '09:20:00')

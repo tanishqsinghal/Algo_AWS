@@ -15,9 +15,15 @@ def schedule_trades(functionName, timeToExecute):
     return
 
 def test():
-    print("SCHEDULED")
-    algo_simple_straddle.execute_trade()
-    # schedule_trades(algo_simple_straddle.execute_trade, '10:23:00')
+    algo_config = {
+        "strikes_traded": ['a', 'b', 'c'],
+        "strikes_ltp": [0, 0, 0],
+        "stop_loss": [0, 0, 0],
+        "target": 0,
+        "stop_loss_hit": False,
+        "trades_exited": False
+    }
+    print(algo_config['strikes_traded'][:-1])
 
 
 test()
