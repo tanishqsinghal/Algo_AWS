@@ -38,7 +38,8 @@ def custom_message(msg):
             if algo_config['strikes_ltp'][x] >= algo_config['stop_loss'][x]:
                 algo_config['stop_loss_hit'] = True
 
-                threading.Thread(target=send_telegram_message, args=('SL:- ' + algo_config['strikes_traded'][x])).start()
+                send_telegram_message('SL:- ' + algo_config['strikes_traded'][x])
+                # threading.Thread(target=send_telegram_message, args=('SL:- ' + algo_config['strikes_traded'][x])).start()
                 threading.Thread(target=execute_trade(), args=(x)).start()
                 sys.exit()
 
