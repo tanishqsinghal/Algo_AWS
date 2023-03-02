@@ -10,6 +10,7 @@ algo_config = {
     "strikes_ltp": [0, 0, 0],
     "stop_loss": [0, 0, 0],
     "target": 0,
+    "sl_side": 0,
     "stop_loss_hit": False,
     "trades_exited": False
 }
@@ -38,9 +39,11 @@ def custom_message(msg):
             if algo_config['strikes_ltp'][x] >= algo_config['stop_loss'][x]:
                 algo_config['stop_loss_hit'] = True
 
+                algo_config['sl_side'] = x
                 send_telegram_message('SL:- ' + algo_config['strikes_traded'][x])
                 # threading.Thread(target=send_telegram_message, args=('SL:- ' + algo_config['strikes_traded'][x])).start()
-                threading.Thread(target=execute_trade(), args=(x)).start()
+                # threading.Thread(target=execute_trade(), args=(x)).start()
+                threading.Thread(target=execute_trade).start()
                 sys.exit()
 
 
@@ -66,12 +69,14 @@ def custom_message_2(msg):
         if algo_config['strikes_ltp'][2] >= algo_config['stop_loss'][2]:
             algo_config['trades_exited'] = True
 
-            threading.Thread(target=send_telegram_message, args=('SL:- ' + str(algo_config['strikes_ltp'][2]))).start()
+            send_telegram_message('SL:- ' + str(algo_config['strikes_ltp'][2]))
+            # threading.Thread(target=send_telegram_message, args=('SL:- ' + str(algo_config['strikes_ltp'][2]))).start()
             sys.exit()
         if algo_config['strikes_ltp'][2] <= algo_config['target']:
             algo_config['trades_exited'] = True
 
-            threading.Thread(target=send_telegram_message, args=('Target:- ' + str(algo_config['strikes_ltp'][2]))).start()
+            send_telegram_message('Target:- ' + str(algo_config['strikes_ltp'][2]))
+            # threading.Thread(target=send_telegram_message, args=('Target:- ' + str(algo_config['strikes_ltp'][2]))).start()
             sys.exit()
 
 
@@ -88,7 +93,7 @@ def run_websocket_2():
     config['websocket_process'].daemon = True
     config['websocket_process'].start()
 
-def execute_trade(sl_side):
+def execute_trade():
     print("TRADES EXECUTED")
     spotPrice = config["fyers"].quotes({"symbols": "NSE:NIFTYBANK-INDEX"})['d'][0]['v']['lp']
     expiry_date = config["expiry_date_banknifty"]
@@ -100,7 +105,7 @@ def execute_trade(sl_side):
     PE_Sell_StrikeSymbol = 'NSE:BANKNIFTY' + expiry_date + str((spotPrice_Round - sellGap) * 100) + 'PE'
 
     # target_strike = ''
-    target_strike = CE_Sell_StrikeSymbol if sl_side == 0 else PE_Sell_StrikeSymbol
+    target_strike = CE_Sell_StrikeSymbol if algo_config['sl_side'] == 0 else PE_Sell_StrikeSymbol
 
     strike_LTP = config["fyers"].quotes({"symbols": target_strike})['d'][0]['v']['lp']
 
