@@ -134,7 +134,7 @@ def schedule_trades(functionName, timeToExecute):
 schedule.every().monday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().tuesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().wednesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
-schedule.every().thursday.at(convert_time_to_utc("09:05:00")).do(generate_token)
+schedule.every().thursday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().friday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 # schedule.every().saturday.at("11:03:00").do(generate_token)
 # schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(generate_token)

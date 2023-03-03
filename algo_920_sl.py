@@ -40,7 +40,7 @@ def custom_message(msg):
                 algo_config['stop_loss_hit'] = True
 
                 algo_config['sl_side'] = x
-                send_telegram_message('SL:- ' + algo_config['strikes_traded'][x])
+                send_telegram_message('SL:- ' + str(algo_config['strikes_ltp'][x]) + algo_config['strikes_traded'][x][-7:])
                 # threading.Thread(target=send_telegram_message, args=('SL:- ' + algo_config['strikes_traded'][x])).start()
                 # threading.Thread(target=execute_trade(), args=(x)).start()
                 threading.Thread(target=execute_trade).start()
@@ -130,7 +130,7 @@ def execute_trade():
 
     send_telegram_message(telegram_Message)
 
-    run_websocket()
+    run_websocket_2()
     return
 
 def pre_trade():
@@ -162,7 +162,7 @@ def pre_trade():
     algo_config["strikes_ltp"][1] = PE_Sell_StrikeSymbol_LTP
 
 
-    telegram_Message = date.strftime("%A") + "\n" + \
+    telegram_Message = "<----- " + date.strftime("%A") + " ----->" + "\n\n" + \
                        "BANKNIFTY <-> " + str(spotPrice) + "\n" + \
                        CE_Sell_StrikeSymbol[-7:] + " <- S -> " + str(CE_Sell_StrikeSymbol_LTP) + "\n" + \
                        PE_Sell_StrikeSymbol[-7:] + " <- S -> " + str(PE_Sell_StrikeSymbol_LTP) + "\n" + \
