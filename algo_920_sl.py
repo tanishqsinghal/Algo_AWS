@@ -40,7 +40,7 @@ def custom_message(msg):
                 algo_config['stop_loss_hit'] = True
 
                 algo_config['sl_side'] = x
-                send_telegram_message('SL:- ' + str(algo_config['strikes_ltp'][x]) + algo_config['strikes_traded'][x][-7:])
+                send_telegram_message('SL:- ' + str(algo_config['strikes_ltp'][x]) + "\n" + algo_config['strikes_traded'][x][-7:])
                 # threading.Thread(target=send_telegram_message, args=('SL:- ' + algo_config['strikes_traded'][x])).start()
                 # threading.Thread(target=execute_trade(), args=(x)).start()
                 threading.Thread(target=execute_trade).start()
@@ -89,6 +89,7 @@ def run_websocket_2():
     print("CONFIGURATION_2")
     # fs.subscribe(symbol=config["strikes_traded"], data_type=data_type)
     # fs.keep_running()
+    send_telegram_message('WEBSOCKET STARTED')
     config['websocket_process'] = threading.Thread(target=fs.subscribe, args=(algo_config["strikes_traded"][2], data_type,))
     config['websocket_process'].daemon = True
     config['websocket_process'].start()
@@ -105,7 +106,7 @@ def execute_trade():
     PE_Sell_StrikeSymbol = 'NSE:BANKNIFTY' + expiry_date + str((spotPrice_Round - sellGap) * 100) + 'PE'
 
     # target_strike = ''
-    target_strike = CE_Sell_StrikeSymbol if algo_config['sl_side'] == 0 else PE_Sell_StrikeSymbol
+    target_strike = PE_Sell_StrikeSymbol if algo_config['sl_side'] == 0 else CE_Sell_StrikeSymbol
 
     strike_LTP = config["fyers"].quotes({"symbols": target_strike})['d'][0]['v']['lp']
 
