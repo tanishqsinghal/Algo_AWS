@@ -10,7 +10,8 @@ config = {
     "strikes_ltp": [0, 0, 0, 0],
     "stop_loss": 0,
     "target": 0,
-    "trades_exited": False
+    "trades_exited": False,
+    "message_to_send": ""
 }
 
 def send_telegram_message(request):

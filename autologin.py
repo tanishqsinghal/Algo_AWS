@@ -114,8 +114,10 @@ def generate_token():
     send_telegram_message("LOGGED IN")
     # import algo_simple_straddle
     # algo_simple_straddle.start_algo()
-    import algo_920_sl
-    algo_920_sl.start_algo()
+    # import algo_920_sl
+    # algo_920_sl.start_algo()
+    import algo_range_break
+    algo_range_break.schedule_algo()
 
 
 

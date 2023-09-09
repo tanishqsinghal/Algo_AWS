@@ -1,8 +1,8 @@
 import schedule, time, datetime, requests, json, os, pytz
 import threading, sys
 from threading import Timer
-# import pandas as pd
-import datatable as dt
+import pandas as pd
+# import datatable as dt
 from fyers_api.Websocket import ws
 
 from fyers_api import fyersModel, accessToken
@@ -11,7 +11,6 @@ from autologin import *
 session = accessToken.SessionModel(client_id='ORDBWKXRS7-100', secret_key='5R3786TZ0W',
                                    redirect_uri='https://www.google.co.in', response_type='code',
                                    grant_type='authorization_code')
-
 config = {
     "client_id": "ORDBWKXRS7-100",
     "secret_key": "5R3786TZ0W",
@@ -63,7 +62,7 @@ def run_websocket():
 
 
 def generate_token():
-    print("_______________GENERATING TOKEN_________")
+    print("_______________GENERATING TOKEN MAIN_________")
     file = json.load(open("token.json", 'r'))
     if file['date'] == str(datetime.date.today()):
         config["access_token"] = file['token']
@@ -81,17 +80,17 @@ def generate_token():
 
     # config["access_token"] = login()
 
-    # instruments = pd.read_csv('https://public.fyers.in/sym_details/NSE_FO.csv', header=None)
-    # ism = instruments[instruments[13] == '{}'.format('BANKNIFTY')]
-    # config["expiry_date_banknifty"] = ism[9].tolist()[0][13:-7]
+    instruments = pd.read_csv('https://public.fyers.in/sym_details/NSE_FO.csv', header=None)
+    ism = instruments[instruments[13] == '{}'.format('BANKNIFTY')]
+    config["expiry_date_banknifty"] = ism[9].tolist()[0][13:-7]
 
-    instruments = dt.fread('https://public.fyers.in/sym_details/NSE_FO.csv')
-    instruments = instruments.to_list()
-    config["expiry_date_banknifty"] = instruments[9][instruments[13].index('BANKNIFTY')][13:-7]
+    # instruments = dt.fread('https://public.fyers.in/sym_details/NSE_FO.csv')
+    # instruments = instruments.to_list()
+    # config["expiry_date_banknifty"] = instruments[9][instruments[13].index('BANKNIFTY')][13:-7]
 
     config["fyers"] = fyersModel.FyersModel(client_id=config["client_id"], token=config["access_token"],
                                             log_path="")
-    print("LOGGED IN")
+    print("LOGGED IN MAIN")
     send_telegram_message("LOGGED IN")
     schedule_trades(execute_trade, '09:20:00')
 
