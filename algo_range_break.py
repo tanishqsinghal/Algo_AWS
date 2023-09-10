@@ -55,7 +55,8 @@ def check_range_nr7(candles, stock, timeframe):
                     if is_nr7_found == False:
                         if current_candle_range < min(range_array):
                             print(stock + " NR7 Found:- ", candle_time)
-                            config["message_to_send"] += '\n\nNR7 <-' + str(timeframe) + '-> ' + stock + ' <--> ' + str(candle_time.time())
+                            if y >= len(candles) - 2:
+                                config["message_to_send"] += '\n\nNR7 <-' + str(timeframe) + '-> ' + stock + ' <--> ' + str(candle_time.time())
                             # send_telegram_message('NR7 <-' + str(timeframe) + '-> ' + stock + ' <--> ' + str(candle_time.time()))
                             is_nr7_found = True
                             break

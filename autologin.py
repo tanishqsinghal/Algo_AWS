@@ -7,7 +7,7 @@ import schedule, time, datetime, requests, json, os, pytz
 import threading, sys
 from threading import Timer
 # import pandas as pd
-import datatable as dt
+# import datatable as dt
 
 from config_file import *
 
@@ -104,9 +104,9 @@ def generate_token():
     # ism = instruments[instruments[13] == '{}'.format('BANKNIFTY')]
     # config["expiry_date_banknifty"] = ism[9].tolist()[0][13:-7]
 
-    instruments = dt.fread('https://public.fyers.in/sym_details/NSE_FO.csv')
-    instruments = instruments.to_list()
-    config["expiry_date_banknifty"] = instruments[9][instruments[13].index('BANKNIFTY')][13:-7]
+    # instruments = dt.fread('https://public.fyers.in/sym_details/NSE_FO.csv')
+    # instruments = instruments.to_list()
+    # config["expiry_date_banknifty"] = instruments[9][instruments[13].index('BANKNIFTY')][13:-7]
 
     config["fyers"] = fyersModel.FyersModel(client_id=config["client_id"], token=config["access_token"],
                                             log_path="")
