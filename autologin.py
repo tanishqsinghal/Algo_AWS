@@ -142,6 +142,13 @@ schedule.every().friday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 # schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 # schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(schedule_trades, execute_trade, '13-55-00')
 # generate_token()
+
+def background_test():
+    print("WORKING IN BACKGROUND")
+    send_telegram_message("WORKING IN BACKGROUND")
+
+Timer(30, background_test).start()
+
 while True:
     schedule.run_pending()
     time.sleep(60)
