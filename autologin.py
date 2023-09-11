@@ -133,6 +133,19 @@ def schedule_trades(functionName, timeToExecute):
     return
 
 
+def data_test():
+    data = {
+        "symbol": "NSE:SBIN-EQ",
+        "resolution": "15",
+        "date_format": "1",
+        "range_from": datetime.datetime.today().strftime('%Y-%m-%d'),
+        "range_to": datetime.datetime.today().strftime('%Y-%m-%d'),
+        "cont_flag": "1"
+    }
+
+    response = config["fyers"].history(data=data)
+    print(response)
+
 schedule.every().monday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().tuesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().wednesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
@@ -141,13 +154,15 @@ schedule.every().friday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 # schedule.every().saturday.at("11:03:00").do(generate_token)
 # schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 # schedule.every().sunday.at(convert_time_to_utc("09:00:00")).do(schedule_trades, execute_trade, '13-55-00')
-# generate_token()
+generate_token()
+data_test()
 
-def background_test():
-    print("WORKING IN BACKGROUND")
-    send_telegram_message("WORKING IN BACKGROUND")
-
-Timer(30, background_test).start()
+#Code to test if the script is working in the background or not
+# def background_test():
+#     print("WORKING IN BACKGROUND")
+#     send_telegram_message("WORKING IN BACKGROUND")
+#
+# Timer(30, background_test).start()
 
 while True:
     schedule.run_pending()
