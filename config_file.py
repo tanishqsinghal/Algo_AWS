@@ -12,8 +12,8 @@ config = {
     "target": 0,
     "trades_exited": False,
     "message_to_send": "",
-    "scanner_start_time": datetime.now(),
-    "scanner_end_time": datetime.now()
+    "scanner_start_time": datetime.datetime.now(),
+    "scanner_end_time": datetime.datetime.now()
 }
 
 def send_telegram_message(request):
