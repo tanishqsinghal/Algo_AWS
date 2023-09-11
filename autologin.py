@@ -155,6 +155,7 @@ def data_test():
               "SAIL", "JKCEMENT", "MRF", "COROMANDEL", "NAVINFLUOR", "ICICIGI", "ATUL", "DABUR", "MGL", "BALKRISIND",
               "BALRAMCHIN", "IPCALAB", "BOSCHLTD", "ALKEM", "MARICO", "ABBOTINDIA", "MANAPPURAM", "HINDCOPPER",
               "IBULHSGFIN", "INDIACEM", "DELTACORP", "HDFC"]
+    config["message_to_send"] = ""
 
     for x in range(len(stocks)):
         data = {
@@ -168,6 +169,8 @@ def data_test():
 
         response = config["fyers"].history(data=data)
         print(response['s'])
+        config["message_to_send"] += "\n" + response['s']
+    send_telegram_message(config["message_to_send"])
 
 schedule.every().monday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().tuesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
