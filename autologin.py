@@ -134,17 +134,40 @@ def schedule_trades(functionName, timeToExecute):
 
 
 def data_test():
-    data = {
-        "symbol": "NSE:SBIN-EQ",
-        "resolution": "15",
-        "date_format": "1",
-        "range_from": datetime.datetime.today().strftime('%Y-%m-%d'),
-        "range_to": datetime.datetime.today().strftime('%Y-%m-%d'),
-        "cont_flag": "1"
-    }
+    stocks = ["HDFCBANK", "PFC", "RECLTD", "RELIANCE", "TATAPOWER", "COALINDIA", "SBIN", "TATAMOTORS", "IRCTC",
+              "ICICIBANK", "LT", "HAL", "NTPC", "KOTAKBANK", "DLF", "HAVELLS", "AXISBANK", "BANDHANBNK", "BANKBARODA",
+              "IEX", "INDUSINDBK", "CHOLAFIN", "ADANIPORTS", "BAJFINANCE", "CANBK", "GAIL", "FEDERALBNK", "TATASTEEL",
+              "BAJAJFINSV", "M&MFIN", "INDUSTOWER", "TCS", "MARUTI", "INFY", "HINDALCO", "POWERGRID", "IOC",
+              "IDFCFIRSTB", "IDEA", "ZEEL", "SHRIRAMFIN", "ADANIENT", "ITC", "BHARTIARTL", "BEL", "HCLTECH", "CONCOR",
+              "RBLBANK", "BPCL", "ASHOKLEY", "HINDPETRO", "JSWSTEEL", "ICICIPRULI", "TECHM", "ONGC", "PVRINOX",
+              "PETRONET", "HEROMOTOCO", "INDIGO", "NMDC", "TITAN", "CUMMINSIND", "HINDUNILVR", "M&M", "DIXON", "IGL",
+              "UPL", "PERSISTENT", "POLYCAB", "TATACOMM", "BAJAJ-AUTO", "GODREJPROP", "LICHSGFIN", "GLENMARK",
+              "BHARATFORG", "WIPRO", "HDFCAMC", "JINDALSTEL", "AMBUJACEM", "ACC", "HDFCLIFE", "GMRINFRA", "SBILIFE",
+              "SUNPHARMA", "PEL", "AUROPHARMA", "GRASIM", "VEDL", "ULTRACEMCO", "CHAMBLFERT", "IDFC", "AUBANK",
+              "OBEROIRLTY", "VOLTAS", "NATIONALUM", "CROMPTON", "TRENT", "DEEPAKNTR", "BRITANNIA", "ASIANPAINT",
+              "EICHERMOT", "SRF", "BHEL", "APOLLOHOSP", "LTIM", "CUB", "COFORGE", "LUPIN", "DRREDDY", "TATACONSUM",
+              "MFSL", "DIVISLAB", "ESCORTS", "CIPLA", "PIIND", "PAGEIND", "INDHOTEL", "LAURUSLABS", "L&TFH",
+              "MCDOWELL-N", "DALBHARAT", "ABB", "SBICARD", "TVSMOTOR", "AARTIIND", "ABCAPITAL", "JUBLFOOD", "UBL",
+              "BSOFT", "ASTRAL", "GNFC", "ABFRL", "PNB", "SIEMENS", "NAUKRI", "ZYDUSLIFE", "TATACHEM", "MCX",
+              "EXIDEIND", "MPHASIS", "LALPATHLAB", "TORNTPHARM", "BIOCON", "LTTS", "OFSS", "SHREECEM", "GUJGASLTD",
+              "SUNTV", "SYNGENE", "GRANULES", "RAMCOCEM", "BATAINDIA", "CANFINHOME", "BERGEPAINT", "PIDILITIND",
+              "MUTHOOTFIN", "METROPOLIS", "COLPAL", "APOLLOTYRE", "NESTLEIND", "GODREJCP", "MOTHERSON", "INDIAMART",
+              "SAIL", "JKCEMENT", "MRF", "COROMANDEL", "NAVINFLUOR", "ICICIGI", "ATUL", "DABUR", "MGL", "BALKRISIND",
+              "BALRAMCHIN", "IPCALAB", "BOSCHLTD", "ALKEM", "MARICO", "ABBOTINDIA", "MANAPPURAM", "HINDCOPPER",
+              "IBULHSGFIN", "INDIACEM", "DELTACORP", "HDFC"]
 
-    response = config["fyers"].history(data=data)
-    print(response)
+    for x in range(len(stocks)):
+        data = {
+            "symbol": "NSE:" + stocks[x] + "-EQ",
+            "resolution": "15",
+            "date_format": "1",
+            "range_from": datetime.datetime.today().strftime('%Y-%m-%d'),
+            "range_to": datetime.datetime.today().strftime('%Y-%m-%d'),
+            "cont_flag": "1"
+        }
+
+        response = config["fyers"].history(data=data)
+        print(response['s'])
 
 schedule.every().monday.at(convert_time_to_utc("09:00:00")).do(generate_token)
 schedule.every().tuesday.at(convert_time_to_utc("09:00:00")).do(generate_token)
