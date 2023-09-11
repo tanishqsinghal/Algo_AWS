@@ -21,8 +21,8 @@ def schedule_trades(functionName, timeToExecute):
 def check_range_nr7(candles, stock, timeframe):
     for x in range(len(candles)):
         # Proceed ahead if current time is not in the defined range
-        candle_time = datetime.datetime.fromtimestamp(candles[x][0])
-        if config["scanner_start_time"] > candle_time.time() > config["scanner_end_time"]:
+        first_candle_time = datetime.datetime.fromtimestamp(candles[x][0])
+        if config["scanner_start_time"] > first_candle_time.time() > config["scanner_end_time"]:
             continue
 
         first_candle_high = candles[x][2]
@@ -33,7 +33,7 @@ def check_range_nr7(candles, stock, timeframe):
         is_nr7_found = False
 
         for y in range(x, len(candles)):
-            candle_time = datetime.datetime.fromtimestamp(candles[y][0])
+            current_candle_time = datetime.datetime.fromtimestamp(candles[y][0])
             current_candle_close = candles[y][4]
             if current_candle_close > first_candle_high or current_candle_close < first_candle_low:
                 if y - x < 7:
@@ -51,13 +51,13 @@ def check_range_nr7(candles, stock, timeframe):
                 current_candle_low = candles[y][3]
                 current_candle_range = current_candle_high - current_candle_low
 
-                if len(range_array) > 5:
+                if len(range_array) > 6:
                     if is_nr7_found == False:
                         if current_candle_range < min(range_array):
-                            print(stock + " NR7 Found:- ", candle_time)
+                            # print(stock + " NR7 Found:- " + first_candle_time.astimezone(pytz.timezone('Asia/Kolkata')).strftime("%H:%M") + ' <--> ' + current_candle_time.astimezone(pytz.timezone('Asia/Kolkata')).strftime("%H:%M"))
                             if y >= len(candles) - 2:
-                                config["message_to_send"] += '\n\nNR7 <-' + str(timeframe) + '-> ' + stock + ' <--> ' + str(candle_time.time())
-                            # send_telegram_message('NR7 <-' + str(timeframe) + '-> ' + stock + ' <--> ' + str(candle_time.time()))
+                                config["message_to_send"] += '\n\nNR7 <-' + str(timeframe) + '-> ' + stock + ' <--> ' + first_candle_time.astimezone(pytz.timezone('Asia/Kolkata')).strftime("%H:%M") + ' <--> ' + current_candle_time.astimezone(pytz.timezone('Asia/Kolkata')).strftime("%H:%M")
+                            # send_telegram_message('NR7 <-' + str(timeframe) + '-> ' + stock + ' <--> ' + str(current_candle_time.time()))
                             is_nr7_found = True
                             break
                 else:
@@ -65,13 +65,13 @@ def check_range_nr7(candles, stock, timeframe):
 
 def run_scanner(timeframe):
     print("TRADES EXECUTED-----------------------------------" + str(timeframe) + "-----------------------")
-    stocks = ["HDFCBANK","PFC","RECLTD","RELIANCE","TATAPOWER","COALINDIA","SBIN","TATAMOTORS","IRCTC","ICICIBANK","LT","HAL","NTPC","KOTAKBANK","DLF","HAVELLS","AXISBANK","BANDHANBNK","BANKBARODA","IEX","INDUSINDBK","CHOLAFIN","ADANIPORTS","BAJFINANCE","CANBK","GAIL","FEDERALBNK","TATASTEEL","BAJAJFINSV","M&MFIN","INDUSTOWER","TCS","MARUTI","INFY","HINDALCO","POWERGRID","IOC","IDFCFIRSTB","IDEA","ZEEL","SHRIRAMFIN","ADANIENT","ITC","BHARTIARTL","BEL","HCLTECH","CONCOR","RBLBANK","BPCL","ASHOKLEY","HINDPETRO","JSWSTEEL","ICICIPRULI","TECHM","ONGC","PVRINOX","PETRONET","HEROMOTOCO","INDIGO","NMDC","TITAN","CUMMINSIND","HINDUNILVR","M&M","DIXON","IGL","UPL","PERSISTENT","POLYCAB","TATACOMM","BAJAJ-AUTO","GODREJPROP","LICHSGFIN","GLENMARK","BHARATFORG","WIPRO","HDFCAMC","JINDALSTEL","AMBUJACEM","ACC","HDFCLIFE","GMRINFRA","SBILIFE","SUNPHARMA","PEL","AUROPHARMA","GRASIM","VEDL","ULTRACEMCO","CHAMBLFERT","IDFC","AUBANK","OBEROIRLTY","VOLTAS","NATIONALUM","CROMPTON","TRENT","DEEPAKNTR","BRITANNIA","ASIANPAINT","EICHERMOT","SRF","BHEL","APOLLOHOSP","LTIM","CUB","COFORGE","LUPIN","DRREDDY","TATACONSUM","MFSL","DIVISLAB","ESCORTS","CIPLA","PIIND","PAGEIND","INDHOTEL","LAURUSLABS","L&TFH","MCDOWELL-N","DALBHARAT","ABB","SBICARD","TVSMOTOR","AARTIIND","ABCAPITAL","JUBLFOOD","UBL","BSOFT","ASTRAL","GNFC","ABFRL","PNB","SIEMENS","NAUKRI","ZYDUSLIFE","TATACHEM","MCX","EXIDEIND","MPHASIS","LALPATHLAB","TORNTPHARM","BIOCON","LTTS","OFSS","SHREECEM","GUJGASLTD","SUNTV","SYNGENE","GRANULES","RAMCOCEM","BATAINDIA","CANFINHOME","BERGEPAINT","PIDILITIND","MUTHOOTFIN","METROPOLIS","COLPAL","APOLLOTYRE","NESTLEIND","GODREJCP","MOTHERSON","INDIAMART","SAIL","JKCEMENT","MRF","COROMANDEL","NAVINFLUOR","ICICIGI","ATUL","DABUR","MGL","BALKRISIND","BALRAMCHIN","IPCALAB","BOSCHLTD","ALKEM","MARICO","ABBOTINDIA","MANAPPURAM","HINDCOPPER","IBULHSGFIN","INDIACEM","DELTACORP"]
-    # stocks = ["HDFCBANK", "PFC", "RECLTD", "RELIANCE", "TATAPOWER", "COALINDIA", "SBIN", "TATAMOTORS"]
+    # stocks = ["HDFCBANK","PFC","RECLTD","RELIANCE","TATAPOWER","COALINDIA","SBIN","TATAMOTORS","IRCTC","ICICIBANK","LT","HAL","NTPC","KOTAKBANK","DLF","HAVELLS","AXISBANK","BANDHANBNK","BANKBARODA","IEX","INDUSINDBK","CHOLAFIN","ADANIPORTS","BAJFINANCE","CANBK","GAIL","FEDERALBNK","TATASTEEL","BAJAJFINSV","M&MFIN","INDUSTOWER","TCS","MARUTI","INFY","HINDALCO","POWERGRID","IOC","IDFCFIRSTB","IDEA","ZEEL","SHRIRAMFIN","ADANIENT","ITC","BHARTIARTL","BEL","HCLTECH","CONCOR","RBLBANK","BPCL","ASHOKLEY","HINDPETRO","JSWSTEEL","ICICIPRULI","TECHM","ONGC","PVRINOX","PETRONET","HEROMOTOCO","INDIGO","NMDC","TITAN","CUMMINSIND","HINDUNILVR","M&M","DIXON","IGL","UPL","PERSISTENT","POLYCAB","TATACOMM","BAJAJ-AUTO","GODREJPROP","LICHSGFIN","GLENMARK","BHARATFORG","WIPRO","HDFCAMC","JINDALSTEL","AMBUJACEM","ACC","HDFCLIFE","GMRINFRA","SBILIFE","SUNPHARMA","PEL","AUROPHARMA","GRASIM","VEDL","ULTRACEMCO","CHAMBLFERT","IDFC","AUBANK","OBEROIRLTY","VOLTAS","NATIONALUM","CROMPTON","TRENT","DEEPAKNTR","BRITANNIA","ASIANPAINT","EICHERMOT","SRF","BHEL","APOLLOHOSP","LTIM","CUB","COFORGE","LUPIN","DRREDDY","TATACONSUM","MFSL","DIVISLAB","ESCORTS","CIPLA","PIIND","PAGEIND","INDHOTEL","LAURUSLABS","L&TFH","MCDOWELL-N","DALBHARAT","ABB","SBICARD","TVSMOTOR","AARTIIND","ABCAPITAL","JUBLFOOD","UBL","BSOFT","ASTRAL","GNFC","ABFRL","PNB","SIEMENS","NAUKRI","ZYDUSLIFE","TATACHEM","MCX","EXIDEIND","MPHASIS","LALPATHLAB","TORNTPHARM","BIOCON","LTTS","OFSS","SHREECEM","GUJGASLTD","SUNTV","SYNGENE","GRANULES","RAMCOCEM","BATAINDIA","CANFINHOME","BERGEPAINT","PIDILITIND","MUTHOOTFIN","METROPOLIS","COLPAL","APOLLOTYRE","NESTLEIND","GODREJCP","MOTHERSON","INDIAMART","SAIL","JKCEMENT","MRF","COROMANDEL","NAVINFLUOR","ICICIGI","ATUL","DABUR","MGL","BALKRISIND","BALRAMCHIN","IPCALAB","BOSCHLTD","ALKEM","MARICO","ABBOTINDIA","MANAPPURAM","HINDCOPPER","IBULHSGFIN","INDIACEM","DELTACORP"]
+    stocks = ["NSE:NIFTY50-INDEX", "NSE:NIFTYBANK-INDEX", "NSE:FINNIFTY-INDEX", "NSE:MIDCPNIFTY-INDEX", "BSE:SENSEX-INDEX", "BSE:BANKEX-INDEX"]
     config["message_to_send"] = ""
 
     for x in range(len(stocks)):
         data = {
-            "symbol": "NSE:" + stocks[x] + "-EQ",
+            "symbol": stocks[x],
             "resolution": str(timeframe),
             "date_format": "1",
             "range_from": datetime.datetime.today().strftime('%Y-%m-%d'),

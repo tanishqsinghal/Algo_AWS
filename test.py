@@ -2,6 +2,7 @@ import schedule, time, datetime, requests, json, os, pytz
 import threading, sys
 from threading import Timer
 import algo_simple_straddle
+from config_file import *
 
 def schedule_trades(functionName, timeToExecute):
     # timeToExecute = str(convert_time_to_utc(timeToExecute))
