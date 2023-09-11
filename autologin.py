@@ -137,7 +137,7 @@ def check_range_nr7(candles, stock, timeframe):
     for x in range(len(candles) - 1):
         # Proceed ahead if current time is not in the defined range
         candle_time = datetime.datetime.fromtimestamp(candles[x][0])
-        if datetime.time(9, 30, 0) > candle_time.time() > datetime.time(2, 45, 0):
+        if config["scanner_start_time"] > candle_time.time() > config["scanner_end_time"]:
             continue
 
         first_candle_high = candles[x][2]
@@ -180,8 +180,10 @@ def check_range_nr7(candles, stock, timeframe):
 
 def run_scanner(timeframe):
     print("TRADES EXECUTED-----------------------------------" + str(timeframe) + "-----------------------")
+    config["scanner_start_time"] = datetime.datetime.strptime(convert_time_to_utc("09:45:00"), '%H:%M:%S').time()
+    config["scanner_end_time"] = datetime.datetime.strptime(convert_time_to_utc("14:30:00"), '%H:%M:%S').time()
     stocks = ["HDFCBANK","PFC","RECLTD","RELIANCE","TATAPOWER","COALINDIA","SBIN","TATAMOTORS","IRCTC","ICICIBANK","LT","HAL","NTPC","KOTAKBANK","DLF","HAVELLS","AXISBANK","BANDHANBNK","BANKBARODA","IEX","INDUSINDBK","CHOLAFIN","ADANIPORTS","BAJFINANCE","CANBK","GAIL","FEDERALBNK","TATASTEEL","BAJAJFINSV","M&MFIN","INDUSTOWER","TCS","MARUTI","INFY","HINDALCO","POWERGRID","IOC","IDFCFIRSTB","IDEA","ZEEL","SHRIRAMFIN","ADANIENT","ITC","BHARTIARTL","BEL","HCLTECH","CONCOR","RBLBANK","BPCL","ASHOKLEY","HINDPETRO","JSWSTEEL","ICICIPRULI","TECHM","ONGC","PVRINOX","PETRONET","HEROMOTOCO","INDIGO","NMDC","TITAN","CUMMINSIND","HINDUNILVR","M&M","DIXON","IGL","UPL","PERSISTENT","POLYCAB","TATACOMM","BAJAJ-AUTO","GODREJPROP","LICHSGFIN","GLENMARK","BHARATFORG","WIPRO","HDFCAMC","JINDALSTEL","AMBUJACEM","ACC","HDFCLIFE","GMRINFRA","SBILIFE","SUNPHARMA","PEL","AUROPHARMA","GRASIM","VEDL","ULTRACEMCO","CHAMBLFERT","IDFC","AUBANK","OBEROIRLTY","VOLTAS","NATIONALUM","CROMPTON","TRENT","DEEPAKNTR","BRITANNIA","ASIANPAINT","EICHERMOT","SRF","BHEL","APOLLOHOSP","LTIM","CUB","COFORGE","LUPIN","DRREDDY","TATACONSUM","MFSL","DIVISLAB","ESCORTS","CIPLA","PIIND","PAGEIND","INDHOTEL","LAURUSLABS","L&TFH","MCDOWELL-N","DALBHARAT","ABB","SBICARD","TVSMOTOR","AARTIIND","ABCAPITAL","JUBLFOOD","UBL","BSOFT","ASTRAL","GNFC","ABFRL","PNB","SIEMENS","NAUKRI","ZYDUSLIFE","TATACHEM","MCX","EXIDEIND","MPHASIS","LALPATHLAB","TORNTPHARM","BIOCON","LTTS","OFSS","SHREECEM","GUJGASLTD","SUNTV","SYNGENE","GRANULES","RAMCOCEM","BATAINDIA","CANFINHOME","BERGEPAINT","PIDILITIND","MUTHOOTFIN","METROPOLIS","COLPAL","APOLLOTYRE","NESTLEIND","GODREJCP","MOTHERSON","INDIAMART","SAIL","JKCEMENT","MRF","COROMANDEL","NAVINFLUOR","ICICIGI","ATUL","DABUR","MGL","BALKRISIND","BALRAMCHIN","IPCALAB","BOSCHLTD","ALKEM","MARICO","ABBOTINDIA","MANAPPURAM","HINDCOPPER","IBULHSGFIN","INDIACEM","DELTACORP"]
-    # stocks = ["HDFCBANK", "PFC", "RECLTD", "RELIANCE", "TATAPOWER", "COALINDIA", "SBIN", "TATAMOTORS"]
+    # stocks = ["HDFCBANK"]
     config["message_to_send"] = ""
 
     for x in range(len(stocks)):

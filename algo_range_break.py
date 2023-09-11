@@ -19,10 +19,10 @@ def schedule_trades(functionName, timeToExecute):
     return
 
 def check_range_nr7(candles, stock, timeframe):
-    for x in range(len(candles) - 1):
+    for x in range(len(candles)):
         # Proceed ahead if current time is not in the defined range
         candle_time = datetime.datetime.fromtimestamp(candles[x][0])
-        if datetime.time(9, 30, 0) > candle_time.time() > datetime.time(2, 45, 0):
+        if config["scanner_start_time"] > candle_time.time() > config["scanner_end_time"]:
             continue
 
         first_candle_high = candles[x][2]
@@ -32,7 +32,7 @@ def check_range_nr7(candles, stock, timeframe):
         range_array = []
         is_nr7_found = False
 
-        for y in range(x, len(candles) - 1):
+        for y in range(x, len(candles)):
             candle_time = datetime.datetime.fromtimestamp(candles[y][0])
             current_candle_close = candles[y][4]
             if current_candle_close > first_candle_high or current_candle_close < first_candle_low:
@@ -105,6 +105,8 @@ def run_scanner(timeframe):
 
 def start_algo():
     print("STARTING__________________________________")
+    config["scanner_start_time"] = datetime.datetime.strptime(convert_time_to_utc("09:45:00"), '%H:%M:%S').time()
+    config["scanner_end_time"] = datetime.datetime.strptime(convert_time_to_utc("14:30:00"), '%H:%M:%S').time()
     run_scanner(5)
     run_scanner(15)
     schedule.every(5).minutes.do(run_scanner, 5)
