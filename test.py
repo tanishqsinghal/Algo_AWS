@@ -197,7 +197,8 @@ def check_range_nr7():
 # check_range_nr7()
 
 def test_fun():
-    print(datetime.datetime.today().strftime('%Y-%m-%d'))
+    # print(datetime.datetime.fromtimestamp(candles[x][0]).time())
+    print(datetime.datetime.now().time())
 
 test_fun()
 
